@@ -8,8 +8,18 @@ const authorize =
 require("../../middleware/role.middleware");
 
 const {
+  getAnalytics
+} =
+require("./analytics.controller");
+
+const {
   getDashboardStats
 } = require("./dashboard.controller");
+
+router.get(
+  "/analytics",
+  getAnalytics
+);
 
 router.get(
   "/stats",
