@@ -229,9 +229,49 @@ async (
 
 };
 
+const getAllIncidents =
+async (query) => {
+
+  const filter = {};
+
+  if (query.status) {
+    filter.status = query.status;
+  }
+
+  if (query.priority) {
+    filter.priority = query.priority;
+  }
+
+  if (query.category) {
+    filter.category = query.category;
+  }
+
+  return await Incident.find(filter)
+    .populate(
+      "assignedAmbulance",
+      "vehicleCode providerName"
+    )
+    .populate(
+      "assignedHospital",
+      "name"
+    )
+    .populate(
+      "assignedFireStation",
+      "stationName"
+    )
+    .populate(
+      "assignedPoliceStation",
+      "stationName"
+    )
+    .sort({
+      createdAt: -1
+    });
+
+};
 
 module.exports = {
   createIncident,
+  getAllIncidents,
   getIncidentByIncidentId,
   getIncidentTimeline,
   updateIncidentStatus

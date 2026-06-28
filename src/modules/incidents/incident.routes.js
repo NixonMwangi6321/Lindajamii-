@@ -4,12 +4,15 @@ const router = express.Router();
 
 const {
   createIncident,
+  getAllIncidents,
   getIncidentByIncidentId,
   getIncidentTimeline,
   updateIncidentStatus
 } = require("./incident.controller");
 
 router.post("/", createIncident);
+
+router.get("/", getAllIncidents);
 
 router.get(
   "/:incidentId",

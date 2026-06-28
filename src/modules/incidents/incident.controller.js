@@ -29,6 +29,35 @@ async (req, res) => {
 
 };
 
+const getAllIncidents =
+async (req, res) => {
+
+  try {
+
+    const incidents =
+    await incidentService.getAllIncidents(
+      req.query
+    );
+
+    return res.status(200).json({
+      success: true,
+      count: incidents.length,
+      data: incidents
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+
+  }
+
+};
+
 const getIncidentByIncidentId =
 async (req, res) => {
 
@@ -122,6 +151,7 @@ async (req, res) => {
 
 module.exports = {
   createIncident,
+  getAllIncidents,
   getIncidentByIncidentId,
   getIncidentTimeline,
   updateIncidentStatus
