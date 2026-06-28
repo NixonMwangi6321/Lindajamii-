@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const authRoutes =
+require("./modules/auth/auth.routes");
 
 const incidentRoutes =
 require("./modules/incidents/incident.routes");
@@ -20,6 +22,12 @@ require(
 "./modules/policeStations/policeStation.routes"
 );
 
+const dashboardRoutes =
+require("./modules/dashboard/dashboard.routes");
+
+const dispatchRoutes =
+require("./modules/dispatch/dispatch.routes");
+
 const app = express();
 
 // Middleware
@@ -35,6 +43,11 @@ app.get("/health", (req, res) => {
 });
 
 // Routes
+app.use(
+  "/api/auth",
+  authRoutes
+);
+
 app.use(
   "/api/incidents",
   incidentRoutes
@@ -59,5 +72,17 @@ app.use(
   "/api/police-stations",
   policeStationRoutes
 );
+
+
+app.use(
+"/api/dispatch",
+dispatchRoutes
+);
+app.use(
+  "/api/dashboard",
+  dashboardRoutes
+);
+
+
 
 module.exports = app;

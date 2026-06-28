@@ -1,8 +1,6 @@
-const mongoose =
-require("mongoose");
+const mongoose = require("mongoose");
 
-const dispatchSchema =
-new mongoose.Schema(
+const dispatchSchema = new mongoose.Schema(
 {
   incident: {
     type: mongoose.Schema.Types.ObjectId,
@@ -12,25 +10,35 @@ new mongoose.Schema(
 
   ambulance: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Ambulance"
+    ref: "Ambulance",
+    required: true
   },
 
-  status: {
+status: {
+  type: String,
+  enum: [
+    "PENDING",
+    "ACCEPTED",
+    "EN_ROUTE",
+    "ON_SCENE",
+    "COMPLETED"
+  ],
+  default: "PENDING"
+},
+
+  acceptedAt: Date,
+  arrivedAt: Date,
+  completedAt: Date,
+
+  notes: {
     type: String,
-    enum: [
-      "PENDING",
-      "ASSIGNED",
-      "EN_ROUTE",
-      "ARRIVED",
-      "COMPLETED"
-    ],
-    default: "ASSIGNED"
+    default: ""
   }
+
 },
 {
   timestamps: true
-}
-);
+});
 
 module.exports =
 mongoose.model(

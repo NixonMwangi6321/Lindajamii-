@@ -11,8 +11,23 @@ const {
 =
 require("./fireStation.controller");
 
-router.post("/", createFireStation);
+const authenticate =
+require("../../middleware/auth.middleware");
 
-router.get("/", getFireStations);
+const authorize =
+require("../../middleware/role.middleware");
+
+router.post(
+  "/",
+  authenticate,
+  authorize("ADMIN"),
+  createFireStation
+);
+
+router.get(
+  "/",
+  authenticate,
+  getFireStations
+);
 
 module.exports = router;

@@ -10,9 +10,23 @@ const {
 }
 =
 require("./hospital.controller");
+const authenticate =
+require("../../middleware/auth.middleware");
 
-router.post("/", createHospital);
+const authorize =
+require("../../middleware/role.middleware");
 
-router.get("/", getHospitals);
+router.post(
+  "/",
+  authenticate,
+  authorize("ADMIN"),
+  createHospital
+);
+
+router.get(
+  "/",
+  authenticate,
+  getHospitals
+);
 
 module.exports = router;

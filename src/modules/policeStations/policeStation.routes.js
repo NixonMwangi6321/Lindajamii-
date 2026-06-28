@@ -11,8 +11,23 @@ const {
 =
 require("./policeStation.controller");
 
-router.post("/", createPoliceStation);
+const authenticate =
+require("../../middleware/auth.middleware");
 
-router.get("/", getPoliceStations);
+const authorize =
+require("../../middleware/role.middleware");
+
+router.post(
+  "/",
+  authenticate,
+  authorize("ADMIN"),
+  createPoliceStation
+);
+
+router.get(
+  "/",
+  authenticate,
+  getPoliceStations
+);
 
 module.exports = router;

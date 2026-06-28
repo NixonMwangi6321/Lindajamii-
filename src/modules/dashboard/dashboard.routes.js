@@ -1,29 +1,23 @@
 const express = require("express");
 
 const router = express.Router();
-
-const {
-createAmbulance,
-getAmbulances
-} = require("./ambulance.controller");
-
 const authenticate =
 require("../../middleware/auth.middleware");
 
 const authorize =
 require("../../middleware/role.middleware");
 
-router.post(
-  "/",
-  authenticate,
-  authorize("ADMIN"),
-  createAmbulance
-);
+const {
+  getDashboardStats
+} = require("./dashboard.controller");
 
 router.get(
-  "/",
+  "/stats",
   authenticate,
-  getAmbulances
+  authorize(
+    "ADMIN",
+    "DISPATCHER"
+  ),
+  getDashboardStats
 );
-
 module.exports = router;
