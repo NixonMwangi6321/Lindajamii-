@@ -39,8 +39,18 @@ address: String
 },
 
 status: {
-type: String,
-default: "REPORTED"
+  type: String,
+  enum: [
+    "REPORTED",
+    "RESPONDERS_DISPATCHED",
+    "EN_ROUTE",
+    "ARRIVED_AT_SCENE",
+    "PATIENT_PICKED",
+    "AT_HOSPITAL",
+    "RESOLVED",
+    "CLOSED"
+  ],
+  default: "REPORTED"
 },
 assignedAmbulance: {
   type: mongoose.Schema.Types.ObjectId,

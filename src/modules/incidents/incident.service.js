@@ -20,6 +20,11 @@ dispatchResources
 require("../dispatch/dispatchRules.service");
 
 const {
+  getTimeline
+} =
+require("./timeline.service");
+
+const {
 createDispatch
 } =
 require("../dispatch/dispatch.service");
@@ -150,6 +155,84 @@ await incident.save();
 return incident;
 };
 
+const getIncidentTimeline =
+async (incidentId) => {
+
+  const incident =
+  await Incident.findOne({
+    incidentId
+  });
+
+  if (!incident) {
+    throw new Error(
+      "Incident not found"
+    );
+  }
+
+  return await getTimeline(
+    incident._id
+  );
+
+};
+const getIncidentByIncidentId =
+async (incidentId) => {
+
+  return await Incident.findOne({
+    incidentId
+  })
+  .populate(
+    "assignedAmbulance",
+    "vehicleCode providerName status"
+  )
+  .populate(
+    "assignedHospital",
+    "name phone address"
+  )
+  .populate(
+    "assignedFireStation",
+    "stationName contactNumber"
+  )
+  .populate(
+    "assignedPoliceStation",
+    "stationName contactNumber"
+  );
+
+};
+const updateIncidentStatus =
+async (
+  incidentId,
+  status
+) => {
+
+  const incident =
+  await Incident.findOne({
+    incidentId
+  });
+
+  if (!incident) {
+    throw new Error(
+      "Incident not found"
+    );
+  }
+
+  incident.status = status;
+
+  await incident.save();
+
+  await addTimelineEvent(
+    incident._id,
+    "STATUS_UPDATED",
+    `Status changed to ${status}`
+  );
+
+  return incident;
+
+};
+
+
 module.exports = {
-createIncident
+  createIncident,
+  getIncidentByIncidentId,
+  getIncidentTimeline,
+  updateIncidentStatus
 };

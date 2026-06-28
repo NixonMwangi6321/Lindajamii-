@@ -1,27 +1,31 @@
 const mongoose = require("mongoose");
 
-const incidentTimelineSchema = new mongoose.Schema(
-{
+const timelineSchema =
+new mongoose.Schema({
+
   incident: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Incident",
     required: true
   },
 
-  event: {
+  eventType: {
     type: String,
     required: true
   },
 
-  description: String
+  description: {
+    type: String,
+    required: true
+  }
+
 },
 {
   timestamps: true
-}
-);
+});
 
 module.exports =
 mongoose.model(
-  "IncidentTimeline",
-  incidentTimelineSchema
+  "Timeline",
+  timelineSchema
 );

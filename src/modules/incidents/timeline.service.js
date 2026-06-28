@@ -4,13 +4,13 @@ require("./incidentTimeline.model");
 const addTimelineEvent =
 async (
   incidentId,
-  event,
+  eventType,
   description
 ) => {
 
   return await IncidentTimeline.create({
     incident: incidentId,
-    event,
+    eventType,
     description
   });
 
