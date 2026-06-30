@@ -1,61 +1,86 @@
 const mongoose = require("mongoose");
 
-const ambulanceSchema =
-new mongoose.Schema(
+const ambulanceSchema = new mongoose.Schema(
 {
-vehicleCode: {
-type: String,
-required: true,
-unique: true
-},
+  vehicleCode: {
+    type: String,
+    required: true,
+    unique: true
+  },
 
-providerName: {
-type: String,
-required: true
-},
+  providerName: {
+    type: String,
+    required: true
+  },
 
-crewContact: String,
+  crewContact: String,
 
-location: {
-type: {
-type: String,
-enum: ["Point"],
-default: "Point"
-},
+  // Home/Base Location
+  location: {
+    type: {
+      type: String,
+      enum: ["Point"],
+      default: "Point"
+    },
 
+    coordinates: {
+      type: [Number],
+      required: true
+    }
+  },
 
-coordinates: {
-  type: [Number],
-  required: true
-}
+  // Live GPS Location
+  currentLocation: {
+    latitude: {
+      type: Number,
+      default: 0
+    },
 
+    longitude: {
+      type: Number,
+      default: 0
+    },
 
-},
+    heading: {
+      type: Number,
+      default: 0
+    },
 
-status: {
-type: String,
-enum: [
-"AVAILABLE",
-"DISPATCHED",
-"OFFLINE",
-"MAINTENANCE"
-],
-default: "AVAILABLE"
-},
+    speed: {
+      type: Number,
+      default: 0
+    },
 
-lastDispatchTime: Date
+    updatedAt: {
+      type: Date,
+      default: Date.now
+    }
+  },
+
+  status: {
+    type: String,
+    enum: [
+      "AVAILABLE",
+      "DISPATCHED",
+      "OFFLINE",
+      "MAINTENANCE"
+    ],
+    default: "AVAILABLE"
+  },
+
+  lastDispatchTime: Date
 },
 {
-timestamps: true
+  timestamps: true
 }
 );
 
+// Geo index for dispatch queries
 ambulanceSchema.index({
-location: "2dsphere"
+  location: "2dsphere"
 });
 
-module.exports =
-mongoose.model(
-"Ambulance",
-ambulanceSchema
+module.exports = mongoose.model(
+  "Ambulance",
+  ambulanceSchema
 );

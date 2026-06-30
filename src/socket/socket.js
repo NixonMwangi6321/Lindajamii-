@@ -1,17 +1,25 @@
+const { Server } =
+require("socket.io");
+
+const {
+
+updateVehicleLocation
+
+} =
+require("../modules/location/location.service");
+
 let io;
 
 const initializeSocket =
 (server) => {
 
-  const {
-    Server
-  } = require("socket.io");
-
   io =
   new Server(server, {
 
     cors: {
+
       origin: "*"
+
     }
 
   });
@@ -21,43 +29,56 @@ const initializeSocket =
     (socket) => {
 
       console.log(
-        "Client connected:",
-        socket.id
+        "Vehicle Connected"
       );
 
       socket.on(
-        "disconnect",
-        () => {
 
-          console.log(
-            "Client disconnected:",
-            socket.id
-          );
+        "vehicleLocation",
+
+        async (data) => {
+
+          try {
+
+            const ambulance =
+            await updateVehicleLocation(
+
+              data.ambulanceId,
+
+              data.location
+
+            );
+
+            io.emit(
+
+              "vehicleUpdated",
+
+              ambulance
+
+            );
+
+          }
+
+          catch (error) {
+
+            console.error(
+              error.message
+            );
+
+          }
 
         }
+
       );
 
     }
+
   );
 
 };
 
-const getIO =
-() => {
-
-  if (!io) {
-
-    throw new Error(
-      "Socket.IO not initialized"
-    );
-
-  }
-
-  return io;
-
-};
-
 module.exports = {
-  initializeSocket,
-  getIO
+
+  initializeSocket
+
 };

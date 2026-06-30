@@ -25,6 +25,9 @@ require(
 const dashboardRoutes =
 require("./modules/dashboard/dashboard.routes");
 
+const routingRoutes =
+require("./modules/routing/routing.routes");
+
 const dispatchRoutes =
 require("./modules/dispatch/dispatch.routes");
 
@@ -78,6 +81,12 @@ app.use(
 "/api/dispatch",
 dispatchRoutes
 );
+
+app.use(
+  "/api/routing",
+  routingRoutes
+);
+
 app.use(
   "/api/dashboard",
   dashboardRoutes
