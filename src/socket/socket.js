@@ -1,24 +1,26 @@
 const { Server } =
 require("socket.io");
 
-const {
-
-updateVehicleLocation
-
-} =
-require("../modules/location/location.service");
-
-let io;
+let io = null;
 
 const initializeSocket =
 (server) => {
 
-  io =
-  new Server(server, {
+  io = new Server(server, {
 
     cors: {
 
-      origin: "*"
+      origin: "*",
+
+      methods: [
+
+        "GET",
+
+        "POST",
+
+        "PATCH"
+
+      ]
 
     }
 
@@ -29,56 +31,76 @@ const initializeSocket =
     (socket) => {
 
       console.log(
-        "Vehicle Connected"
+        `🟢 Client connected: ${socket.id}`
       );
 
+      // Join a mission room
       socket.on(
+        "join-mission",
+        (missionId) => {
 
-        "vehicleLocation",
+          socket.join(
+            `mission:${missionId}`
+          );
 
-        async (data) => {
-
-          try {
-
-            const ambulance =
-            await updateVehicleLocation(
-
-              data.ambulanceId,
-
-              data.location
-
-            );
-
-            io.emit(
-
-              "vehicleUpdated",
-
-              ambulance
-
-            );
-
-          }
-
-          catch (error) {
-
-            console.error(
-              error.message
-            );
-
-          }
+          console.log(
+            `📍 ${socket.id} joined mission:${missionId}`
+          );
 
         }
+      );
 
+      // Leave a mission room
+      socket.on(
+        "leave-mission",
+        (missionId) => {
+
+          socket.leave(
+            `mission:${missionId}`
+          );
+
+          console.log(
+            `📤 ${socket.id} left mission:${missionId}`
+          );
+
+        }
+      );
+
+      // Disconnect
+      socket.on(
+        "disconnect",
+        () => {
+
+          console.log(
+            `🔴 Client disconnected: ${socket.id}`
+          );
+
+        }
       );
 
     }
-
   );
+
+};
+
+const getIO = () => {
+
+  if (!io) {
+
+    throw new Error(
+      "Socket.IO has not been initialized."
+    );
+
+  }
+
+  return io;
 
 };
 
 module.exports = {
 
-  initializeSocket
+  initializeSocket,
+
+  getIO
 
 };

@@ -1,3 +1,7 @@
+const {
+getIO
+} =
+require("../../socket/socket");
 const Dispatch =
 require("./dispatch.model");
 
@@ -7,20 +11,38 @@ require("../incidents/incident.model");
 const Ambulance =
 require("../ambulances/ambulance.model");
 
+const FireVehicle =
+require("../fireVehicles/fireVehicle.model");
+
 const {
   addTimelineEvent
 } =
 require("../incidents/timeline.service");
 
 const createDispatch =
-async (
-  incidentId,
-  ambulanceId
-) => {
+async ({
+  incident,
+  resourceType,
+  resource,
+  mission = null,
+  eta = null,
+  distance = null
+}) => {
 
   return await Dispatch.create({
-    incident: incidentId,
-    ambulance: ambulanceId
+
+    incident,
+
+    resourceType,
+
+    resource,
+
+    mission,
+
+    eta,
+
+    distance
+
   });
 
 };
@@ -30,12 +52,6 @@ async (
   dispatchId,
   status,
   notes = ""
-) => {
-
-const updateDispatchStatus =
-async (
-  dispatchId,
-  status
 ) => {
 
   const dispatch =
@@ -49,109 +65,144 @@ async (
     );
   }
 
-  dispatch.status = status;
-
-  dispatch.updatedAt =
-  new Date();
-
-  await dispatch.save();
-
-  return dispatch;
-
-};
-
   const incident =
   await Incident.findById(
     dispatch.incident
   );
 
-  const ambulance =
-  await Ambulance.findById(
-    dispatch.ambulance
-  );
+  if (!incident) {
+    throw new Error(
+      "Incident not found"
+    );
+  }
+
+  let resource = null;
+
+  switch (dispatch.resourceType) {
+
+    case "AMBULANCE":
+
+      resource =
+      await Ambulance.findById(
+        dispatch.resource
+      );
+
+      break;
+
+    case "FIRE_VEHICLE":
+
+      resource =
+      await FireVehicle.findById(
+        dispatch.resource
+      );
+
+      break;
+
+    case "POLICE_VEHICLE":
+
+      // We'll implement this module later
+      break;
+
+  }
 
   dispatch.status = status;
   dispatch.notes = notes;
 
   switch (status) {
 
-    case "NOTIFIED":
-
-      await addTimelineEvent(
-        incident._id,
-        "DISPATCH_NOTIFIED",
-        "Ambulance crew notified."
-      );
-
-      break;
-
     case "ACCEPTED":
 
       dispatch.acceptedAt =
       new Date();
 
-      incident.status =
-      "DISPATCH_ACCEPTED";
-
       await addTimelineEvent(
+
         incident._id,
+
         "DISPATCH_ACCEPTED",
-        "Crew accepted dispatch."
+
+        `${dispatch.resourceType} accepted dispatch.`
+
       );
 
       break;
 
     case "EN_ROUTE":
 
+      dispatch.enRouteAt =
+      new Date();
+
       incident.status =
       "EN_ROUTE";
 
       await addTimelineEvent(
+
         incident._id,
+
         "EN_ROUTE",
-        "Ambulance is en route."
+
+        `${dispatch.resourceType} en route.`
+
       );
 
       break;
 
-    case "ARRIVED":
+    case "ARRIVED_AT_SCENE":
 
-      dispatch.arrivedAt =
+      dispatch.arrivedAtSceneAt =
       new Date();
 
       incident.status =
       "ARRIVED_AT_SCENE";
 
       await addTimelineEvent(
+
         incident._id,
-        "ARRIVED",
-        "Ambulance arrived at scene."
+
+        "ARRIVED_AT_SCENE",
+
+        `${dispatch.resourceType} arrived at scene.`
+
       );
 
       break;
 
-    case "PATIENT_PICKED":
+    case "TRANSPORTING":
+
+      dispatch.departedSceneAt =
+      new Date();
 
       incident.status =
       "PATIENT_PICKED";
 
       await addTimelineEvent(
+
         incident._id,
-        "PATIENT_PICKED",
-        "Patient picked for transport."
+
+        "TRANSPORTING",
+
+        "Patient transport started."
+
       );
 
       break;
 
-    case "AT_HOSPITAL":
+    case "AT_DESTINATION":
+
+      dispatch.arrivedAtDestinationAt =
+      new Date();
 
       incident.status =
       "AT_HOSPITAL";
 
       await addTimelineEvent(
+
         incident._id,
-        "AT_HOSPITAL",
-        "Patient arrived at hospital."
+
+        "AT_DESTINATION",
+
+        "Arrived at destination."
+
       );
 
       break;
@@ -164,44 +215,90 @@ async (
       incident.status =
       "RESOLVED";
 
-      ambulance.status =
-      "AVAILABLE";
+      if (resource) {
+
+        resource.status =
+        "AVAILABLE";
+
+        resource.lastDispatchTime =
+        new Date();
+
+      }
 
       await addTimelineEvent(
+
         incident._id,
-        "INCIDENT_RESOLVED",
-        "Incident successfully resolved."
+
+        "MISSION_COMPLETED",
+
+        `${dispatch.resourceType} completed mission.`
+
       );
 
       break;
 
     case "CANCELLED":
 
-      ambulance.status =
-      "AVAILABLE";
+      dispatch.cancelledAt =
+      new Date();
 
       incident.status =
       "CANCELLED";
 
+      if (resource) {
+
+        resource.status =
+        "AVAILABLE";
+
+      }
+
       await addTimelineEvent(
+
         incident._id,
+
         "DISPATCH_CANCELLED",
+
         "Dispatch cancelled."
+
       );
 
+      break;
+
+    default:
       break;
 
   }
 
   await dispatch.save();
   await incident.save();
-  await ambulance.save();
+  getIO()
+
+.to(
+
+`mission:${dispatch.incident}`
+
+)
+
+.emit(
+
+"dispatch-updated",
+
+dispatch
+
+);
+
+  if (resource) {
+    await resource.save();
+  }
 
   return dispatch;
 
 };
 
 module.exports = {
+
   createDispatch,
+
   updateDispatchStatus
+
 };

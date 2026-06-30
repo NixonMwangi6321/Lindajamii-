@@ -1,5 +1,22 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
+
+const app = express();
+
+/* ===========================
+   Middleware
+=========================== */
+
+app.use(cors());
+
+app.use(express.json());
+
+/* ===========================
+   Route Imports
+=========================== */
+
 const authRoutes =
 require("./modules/auth/auth.routes");
 
@@ -13,39 +30,71 @@ const hospitalRoutes =
 require("./modules/hospitals/hospital.routes");
 
 const fireStationRoutes =
-require(
-"./modules/fireStations/fireStation.routes"
-);
+require("./modules/fireStations/fireStation.routes");
 
 const policeStationRoutes =
-require(
-"./modules/policeStations/policeStation.routes"
-);
-
-const dashboardRoutes =
-require("./modules/dashboard/dashboard.routes");
-
-const routingRoutes =
-require("./modules/routing/routing.routes");
+require("./modules/policeStations/policeStation.routes");
 
 const dispatchRoutes =
 require("./modules/dispatch/dispatch.routes");
 
-const app = express();
+const routingRoutes =
+require("./modules/routing/routing.routes");
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+const missionRoutes =
+require("./modules/missions/mission.routes");
 
-// Health Check
-app.get("/health", (req, res) => {
-  res.status(200).json({
+const fireVehicleRoutes =
+require("./modules/fireVehicles/fireVehicle.routes");
+
+const trackingRoutes =
+require("./modules/tracking/tracking.routes");
+
+const dashboardRoutes =
+require("./modules/dashboard/dashboard.routes");
+
+/* ===========================
+   Root Endpoint
+=========================== */
+
+app.get("/", (req, res) => {
+
+  res.json({
+
     success: true,
-    message: "Linda Jamii Backend Running"
+
+    application: "Linda Jamii",
+
+    version: "1.0.0",
+
+    message: "Emergency Response Backend Running"
+
   });
+
 });
 
-// Routes
+/* ===========================
+   Health Check
+=========================== */
+
+app.get("/health", (req, res) => {
+
+  res.status(200).json({
+
+    success: true,
+
+    status: "OK",
+
+    message: "Linda Jamii Backend Running"
+
+  });
+
+});
+
+/* ===========================
+   API Routes
+=========================== */
+
 app.use(
   "/api/auth",
   authRoutes
@@ -76,10 +125,19 @@ app.use(
   policeStationRoutes
 );
 
+app.use(
+  "/api/fire-vehicles",
+  fireVehicleRoutes
+);
 
 app.use(
-"/api/dispatch",
-dispatchRoutes
+  "/api/dispatch",
+  dispatchRoutes
+);
+
+app.use(
+  "/api/missions",
+  missionRoutes
 );
 
 app.use(
@@ -88,10 +146,52 @@ app.use(
 );
 
 app.use(
+  "/api/tracking",
+  trackingRoutes
+);
+
+app.use(
   "/api/dashboard",
   dashboardRoutes
 );
 
+/* ===========================
+   404 Handler
+=========================== */
 
+app.use((req, res) => {
+
+  res.status(404).json({
+
+    success: false,
+
+    message: "Route not found."
+
+  });
+
+});
+
+/* ===========================
+   Global Error Handler
+=========================== */
+
+app.use((err, req, res, next) => {
+
+  console.error(err);
+
+  res.status(err.status || 500).json({
+
+    success: false,
+
+    message:
+      err.message || "Internal Server Error"
+
+  });
+
+});
+
+/* ===========================
+   Export App
+=========================== */
 
 module.exports = app;

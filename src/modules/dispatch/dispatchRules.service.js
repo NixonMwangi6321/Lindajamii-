@@ -1,7 +1,7 @@
 const {
-  findNearestAmbulance
+  selectBestAmbulance
 } =
-require("../../utils/geoDistance");
+require("../routing/assetSelection.service");
 
 const {
   findNearestHospital
@@ -9,14 +9,14 @@ const {
 require("../hospitals/hospitalGeo.service");
 
 const {
-  findNearestFireStation
-} =
-require("../fireStations/fireStationGeo.service");
-
-const {
   findNearestPoliceStation
 } =
 require("../policeStations/policeStationGeo.service");
+
+const {
+  dispatchFireVehicle
+} =
+require("../fireVehicles/fireDispatch.service");
 
 const dispatchResources =
 async (
@@ -27,14 +27,18 @@ async (
 
   const resources = {};
 
+  const incidentLocation = {
+    latitude,
+    longitude
+  };
+
   switch (category) {
 
     case "MEDICAL":
 
       resources.ambulance =
-      await findNearestAmbulance(
-        longitude,
-        latitude
+      await selectBestAmbulance(
+        incidentLocation
       );
 
       resources.hospital =
@@ -48,9 +52,8 @@ async (
     case "ACCIDENT":
 
       resources.ambulance =
-      await findNearestAmbulance(
-        longitude,
-        latitude
+      await selectBestAmbulance(
+        incidentLocation
       );
 
       resources.hospital =
@@ -69,14 +72,14 @@ async (
 
     case "FIRE":
 
-      resources.fireStation =
-      await findNearestFireStation(
+      resources.fireVehicle =
+      await dispatchFireVehicle(
         longitude,
         latitude
       );
 
-      resources.ambulance =
-      await findNearestAmbulance(
+      resources.hospital =
+      await findNearestHospital(
         longitude,
         latitude
       );
@@ -95,14 +98,13 @@ async (
 
     case "DISASTER":
 
-      resources.fireStation =
-      await findNearestFireStation(
-        longitude,
-        latitude
+      resources.ambulance =
+      await selectBestAmbulance(
+        incidentLocation
       );
 
-      resources.ambulance =
-      await findNearestAmbulance(
+      resources.fireVehicle =
+      await dispatchFireVehicle(
         longitude,
         latitude
       );
@@ -120,9 +122,17 @@ async (
       );
 
       break;
+
+    default:
+
+      throw new Error(
+        "Unsupported incident category"
+      );
+
   }
 
   return resources;
+
 };
 
 module.exports = {

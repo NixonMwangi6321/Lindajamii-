@@ -2,78 +2,118 @@ const mongoose = require("mongoose");
 
 const incidentSchema = new mongoose.Schema(
 {
-incidentId: {
-type: String,
-unique: true
+  incidentId: {
+    type: String,
+    unique: true
+  },
+
+  reporterName: {
+    type: String,
+    required: true
+  },
+
+  phoneNumber: {
+    type: String,
+    required: true
+  },
+
+  category: {
+    type: String,
+    default: "UNCLASSIFIED"
+  },
+
+  priority: {
+    type: String,
+    default: "MEDIUM"
+  },
+
+  description: {
+    type: String,
+    required: true
+  },
+
+  location: {
+    latitude: Number,
+    longitude: Number,
+    address: String
+  },
+
+  status: {
+    type: String,
+    enum: [
+      "REPORTED",
+      "RESPONDERS_DISPATCHED",
+      "EN_ROUTE",
+      "ARRIVED_AT_SCENE",
+      "PATIENT_PICKED",
+      "AT_HOSPITAL",
+      "RESOLVED",
+      "CLOSED"
+    ],
+    default: "REPORTED"
+  },
+
+  assignedAmbulance: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Ambulance"
+  },
+
+  assignedHospital: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Hospital"
+  },
+
+  assignedFireStation: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "FireStation"
+  },
+
+  assignedPoliceStation: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "PoliceStation"
+  },
+
+  assignedFireVehicle:{
+
+type:mongoose.Schema.Types.ObjectId,
+
+ref:"FireVehicle"
+
 },
 
-reporterName: {
-type: String,
-required: true
-},
 
-phoneNumber: {
-type: String,
-required: true
-},
+  // ===== Routing Information =====
 
-category: {
-type: String,
-default: "UNCLASSIFIED"
-},
+  estimatedArrivalTime: {
+    type: Number,
+    default: null
+  },
 
-priority: {
-type: String,
-default: "MEDIUM"
-},
+  routeDistance: {
+    type: Number,
+    default: null
+  },
 
-description: {
-type: String,
-required: true
-},
+  routeGeometry: {
+    type: Object,
+    default: null
+  },
 
-location: {
-latitude: Number,
-longitude: Number,
-address: String
-},
+  // ===== Timeline Timestamps =====
 
-status: {
-  type: String,
-  enum: [
-    "REPORTED",
-    "RESPONDERS_DISPATCHED",
-    "EN_ROUTE",
-    "ARRIVED_AT_SCENE",
-    "PATIENT_PICKED",
-    "AT_HOSPITAL",
-    "RESOLVED",
-    "CLOSED"
-  ],
-  default: "REPORTED"
-},
-assignedAmbulance: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "Ambulance"
-},
+  dispatchTime: Date,
 
-assignedHospital: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "Hospital"
-},
-assignedFireStation: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "FireStation"
-},
-assignedPoliceStation: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "PoliceStation"
-}
+  arrivalTime: Date,
+
+  resolvedTime: Date
+
 },
 {
-timestamps: true
+  timestamps: true
 }
 );
 
-module.exports =
-mongoose.model("Incident", incidentSchema);
+module.exports = mongoose.model(
+  "Incident",
+  incidentSchema
+);

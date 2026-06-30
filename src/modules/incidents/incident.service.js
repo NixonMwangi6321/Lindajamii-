@@ -1,7 +1,7 @@
 const {
   getIO
-} =
-require("../../socket/socket");
+} = require("../../socket/socket");
+
 const Incident = require("./incident.model");
 
 const generateIncidentId =
@@ -29,8 +29,15 @@ const {
 } =
 require("../dispatch/dispatch.service");
 
+const {
+  createMission
+} =
+require("../missions/mission.service");
+
 const calculateResponseTime =
 require("../../utils/responseTime");
+
+
 
 const createIncident =
 async (data) => {
@@ -76,34 +83,55 @@ async (data) => {
     data.location.latitude
   );
 
-  // Ambulance
+  // ==========================
+  // Ambulance Assignment
+  // ==========================
   if (resources.ambulance) {
 
-    incident.assignedAmbulance =
-    resources.ambulance._id;
+    const selected =
+    resources.ambulance;
 
-    resources.ambulance.status =
+    incident.assignedAmbulance =
+    selected.ambulance._id;
+
+    incident.estimatedArrivalTime =
+    selected.eta;
+
+    incident.routeDistance =
+    selected.distance;
+
+    incident.routeGeometry =
+    selected.geometry;
+
+    selected.ambulance.status =
     "DISPATCHED";
 
-    resources.ambulance.lastDispatchTime =
+    selected.ambulance.lastDispatchTime =
     new Date();
 
-    await resources.ambulance.save();
+    await selected.ambulance.save();
 
-    await createDispatch(
-      incident._id,
-      resources.ambulance._id
-    );
+    await createDispatch({
+
+  incident: incident._id,
+
+  resourceType: "AMBULANCE",
+
+  resource: selected.ambulance._id
+
+});
 
     await addTimelineEvent(
       incident._id,
       "AMBULANCE_ASSIGNED",
-      `${resources.ambulance.vehicleCode}`
+      `${selected.ambulance.vehicleCode}`
     );
 
   }
 
-  // Hospital
+  // ==========================
+  // Hospital Assignment
+  // ==========================
   if (resources.hospital) {
 
     incident.assignedHospital =
@@ -112,26 +140,52 @@ async (data) => {
     await addTimelineEvent(
       incident._id,
       "HOSPITAL_RECOMMENDED",
-      `${resources.hospital.name}`
+      resources.hospital.name
     );
 
   }
 
-  // Fire Station
-  if (resources.fireStation) {
+  // ==========================
+  // Fire Station Assignment
+  // ==========================
+if (resources.fireVehicle) {
 
-    incident.assignedFireStation =
-    resources.fireStation._id;
+  const selected =
+  resources.fireVehicle;
 
-    await addTimelineEvent(
-      incident._id,
-      "FIRE_STATION_ASSIGNED",
-      `${resources.fireStation.stationName}`
-    );
+  incident.assignedFireVehicle =
+  selected.vehicle._id;
 
-  }
+  incident.assignedFireStation =
+  selected.vehicle.station;
 
-  // Police Station
+  selected.vehicle.status =
+  "DISPATCHED";
+
+  selected.vehicle.lastDispatchTime =
+  new Date();
+
+  await selected.vehicle.save();
+  await createDispatch({
+
+  incident: incident._id,
+
+  resourceType: "FIRE_VEHICLE",
+
+  resource: selected.vehicle._id
+
+});
+  await addTimelineEvent(
+    incident._id,
+    "FIRE_VEHICLE_ASSIGNED",
+    selected.vehicle.vehicleCode
+  );
+
+}
+
+  // ==========================
+  // Police Assignment
+  // ==========================
   if (resources.police) {
 
     incident.assignedPoliceStation =
@@ -140,26 +194,65 @@ async (data) => {
     await addTimelineEvent(
       incident._id,
       "POLICE_ASSIGNED",
-      `${resources.police.stationName}`
+      resources.police.stationName
     );
 
   }
 
-  await incident.save();
+await incident.save();
 
-  await addTimelineEvent(
+// Create Mission
+try {
+
+  await createMission({
+
+    incident:
     incident._id,
-    "DISPATCH_COMPLETED",
-    "Automatic resource assignment completed."
+
+    ambulance:
+    incident.assignedAmbulance,
+
+    hospital:
+    incident.assignedHospital,
+
+    fireStation:
+    incident.assignedFireStation,
+
+    fireVehicle:
+    incident.assignedFireVehicle,
+
+    policeStation:
+    incident.assignedPoliceStation,
+
+    eta:
+    incident.estimatedArrivalTime,
+
+    distance:
+    incident.routeDistance
+
+  });
+
+} catch (error) {
+
+  console.error(
+    "Mission creation failed:",
+    error.message
   );
 
-  getIO().emit(
+}
+
+await addTimelineEvent(
+  incident._id,
+  "DISPATCH_COMPLETED",
+  "Automatic resource assignment completed."
+);
+
+getIO().emit(
   "incident-created",
   incident
 );
 
-  return incident;
-
+return incident;
 };
 
 const getIncidentTimeline =
@@ -201,6 +294,10 @@ async (incidentId) => {
     "assignedFireStation",
     "stationName contactNumber"
   )
+  .populate(
+  "assignedFireVehicle",
+  "vehicleCode vehicleType status"
+)
   .populate(
     "assignedPoliceStation",
     "stationName contactNumber"
@@ -258,14 +355,17 @@ async (
       new Date();
       break;
 
+    default:
+      break;
+
   }
 
   await incident.save();
 
   getIO().emit(
-  "incident-status-updated",
-  incident
-);
+    "incident-status-updated",
+    incident
+  );
 
   await addTimelineEvent(
     incident._id,
@@ -307,6 +407,10 @@ async (query) => {
       "assignedFireStation",
       "stationName"
     )
+    .populate(
+  "assignedFireVehicle",
+  "vehicleCode vehicleType"
+)
     .populate(
       "assignedPoliceStation",
       "stationName"
